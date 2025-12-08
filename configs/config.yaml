@@ -1,0 +1,29 @@
+# Model Settings
+detector:
+  model_name: "ssd_mobilenet_v3_large" # We'll use a TorchVision SSD
+  confidence_threshold: 0.7 # Min confidence to consider a detection
+  target_size: 320 # Input size for the detector (smaller = faster)
+
+feature_extractor:
+  model_name: "mobilenet_v3_small"
+  embedding_dim: 576 # For MobileNetV3-Small
+  input_size: 224
+
+# Registration Settings
+registration:
+  num_raw_captures: 5
+  num_augmentations_per_image: 5 # Will generate 5 augmented versions per raw capture
+  augmentation_strength: 0.15 # Controls how strong augmentations are
+
+prototype:
+  distance_threshold_multiplier: 2.0 # How many standard deviations to add to mean distance
+
+# Recognition Settings
+recognition:
+  similarity_threshold_high: 0.85 # Above this, recognize the object
+  similarity_threshold_low: 0.5 # Below this, consider it unknown
+
+# Data Paths
+paths:
+  objects_database: 'data/objects_db.json'
+  raw_images_dir: 'data/raw_images/'

@@ -5,7 +5,8 @@ import cv2
 from typing import Optional, Tuple
 from torchvision.models.detection import ssdlite320_mobilenet_v3_large,SSDLite320_MobileNet_V3_Large_Weights
 
-from src.utils import load_config, setup_logger
+from src.utils.loads import load_config
+from src.utils.setups import setup_logger
 
 class ObjectDetector:
     """A lightweitght object detector to find the most prominent object in a frame."""
@@ -53,9 +54,14 @@ class ObjectDetector:
         boxes = predictions['boxes'].cpu().numpy()
         scores = predictions['scores'].cpu().numpy()
         labels = predictions['labels'].cpu().numpy()
+        
+        # 1. Filter by confidence
+        is_confident = (scores >= self.confidence_threshold)
+        # 2. Filter by label: exclude the 'person' label (COCO label index 1)
+        is_not_person = (labels != 1)
 
-        # Filter by confidence and keep only "person" (1) and common objects (COCO labels)
-        valid_indices = (scores >= self.confidence_threshold)
+        # Combine the masks to get valid indices
+        valid_indices = is_confident & is_not_person
         
         if not np.any(valid_indices):
             return None

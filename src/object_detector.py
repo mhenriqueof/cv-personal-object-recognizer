@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-import torchvision
 import cv2
 from typing import Optional, Tuple
 from torchvision.models.detection import ssdlite320_mobilenet_v3_large,SSDLite320_MobileNet_V3_Large_Weights

@@ -14,11 +14,11 @@ class AugmentationPipeline:
 
         self.aug_strength = self.config['registration']['augmentation_strength']
         self.num_aug = self.config['registration']['num_augmentations_per_image']
-        self.logger.info(f"Augmentation pipeline initialized (strength: {self.aug_strength})")
+        self.logger.info(f"Augmentation pipeline initialized (strength: {self.aug_strength}).")
         
     def augment(self, image: np.ndarray) -> List[np.ndarray]:
         """
-        Generate augmented versions of a single image.
+        Generates augmented versions of a single image.
         
         Args:
             image: BGR image array (H, W, C).
@@ -63,12 +63,12 @@ class AugmentationPipeline:
 
             augmented.append(aug_img)
 
-        self.logger.debug(f"Generated {len(augmented)} images (1 original + {self.num_aug} augmented)")
+        self.logger.debug(f"Generated {len(augmented)} images (1 original + {self.num_aug} augmented).")
 
         return augmented
     
     def augment_batch(self, images: List[np.ndarray]) -> List[np.ndarray]:
-        """Generate augmented versions for multiple base images."""
+        """Generates augmented versions for multiple base images."""
         all_augmented = []
         for img in images:
             all_augmented.extend(self.augment(img))

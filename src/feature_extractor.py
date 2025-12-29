@@ -43,7 +43,7 @@ initialized - Embedding dim: {self.embedding_dim}")
     
     def extract(self, image: np.ndarray) -> np.ndarray:
         """
-        Extract embedding from a single BGR image (OpenCV format).
+        Extracts embedding from a single BGR image (OpenCV format).
         
         Args:
             image: BGR image array (H, W, C).
@@ -71,7 +71,7 @@ initialized - Embedding dim: {self.embedding_dim}")
     
     def extract_batch(self, images: List[np.ndarray]) -> np.ndarray:
         """
-        Extract embeddings from a batch of images (efficiency).
+        Extracts embeddings from a batch of images (efficiency).
         
         Args:
             images: List of BGR image arrays.

@@ -1,8 +1,8 @@
 import numpy as np
 from typing import Tuple, Dict, Any
 
-from utils.setups import setup_logger
-from utils.loads import load_config
+from src.utils.setups import setup_logger
+from src.utils.loads import load_config
 
 class PrototypeCalculator:
     """Calculates a single prototype vector and distance threshold from a set of embeddings."""
@@ -10,7 +10,7 @@ class PrototypeCalculator:
         self.logger = setup_logger(self.__class__.__name__)
         self.config = load_config()
 
-        self.distance_multiplayer = self.config.['registration']['distance_threshold_multiplier']
+        self.distance_multiplayer = self.config['prototype']['distance_threshold_multiplier']
         self.logger.info(f"Prototype calculator initialized (multiplier: {self.distance_multiplayer}).")
         
     def calculate_prototype(self, embeddings: np.ndarray) -> Tuple[np.ndarray, float]:
@@ -64,5 +64,30 @@ class PrototypeCalculator:
             prototype, threshold = self.calculate_prototype(embeddings)
 
             results[label] = {
-                
+                'prototype': prototype.tolist(), # Convert to list for JSON serialization
+                'threshold': float(threshold),
+                'n_samples': len(embeddings)
             }
+            
+            self.logger.info(f"Calculated prototype for '{label}': {len(embeddings)} samples, "
+                             f"threshold={threshold:.4f}")
+            
+        return results
+
+# Quick test
+if __name__ == '__main__':
+    # Create dummy normalized embeddings
+    np.random.seed(42)
+    dummy_embeddings = np.random.randn(30, 576) # 30 samples, 576-dim
+    # Normalize each row (sample)
+    norms = np.linalg.norm(dummy_embeddings, axis=1, keepdims=True)
+    dummy_embeddings = dummy_embeddings / (norms + 1e-9)
+
+    calculator = PrototypeCalculator()
+    prototype, threshold = calculator.calculate_prototype(dummy_embeddings)
+
+    print(f"Prototype shape: {prototype.shape}")
+    print(f"Prototype norm: {np.linalg.norm(prototype):.6f}")
+    print(f"Distance threshold: {threshold:.4f}")
+    print("Prototype calculator test: OK")
+    

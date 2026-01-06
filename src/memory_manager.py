@@ -8,9 +8,7 @@ from src.utils.logger import setup_logger
 from src.utils.config import load_config
 
 class MemoryManager:
-    """
-    Storage for objects. Stores only the average embedding (prototype) for each object.
-    """
+    """Storage for objects. Stores only the average embedding (prototype) for each object."""
     def __init__(self):
         self.logger = setup_logger(self.__class__.__name__)
         self.config = load_config()
@@ -47,7 +45,7 @@ class MemoryManager:
         with open(self.db_path, 'w') as f:
             json.dump(save_data, f, indent=2)
 
-    def add_object(self, label: str, embeddings: List[np.ndarray]) -> None:
+    def add_object(self, label: str, embeddings: np.ndarray) -> None:
         """
         Adds new object by calculating and storing its prototype (average).
         

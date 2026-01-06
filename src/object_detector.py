@@ -4,8 +4,8 @@ import cv2
 from typing import Optional, Tuple
 from torchvision.models.detection import ssdlite320_mobilenet_v3_large,SSDLite320_MobileNet_V3_Large_Weights
 
-from src.utils.loads import load_config
-from src.utils.setups import setup_logger
+from src.utils.config import load_config
+from src.utils.logger import setup_logger
 
 class ObjectDetector:
     """A lightweitght object detector to find the most prominent object in a frame."""
@@ -91,7 +91,3 @@ class ObjectDetector:
         x1, y1, x2, y2 = box
         return frame[y1:y2, x1:x2]
     
-# Test
-if __name__ == '__main__':
-    detector = ObjectDetector()
-    print("Detector module test: OK")

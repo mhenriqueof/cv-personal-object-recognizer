@@ -8,8 +8,8 @@ from torchvision import transforms
 from PIL import Image
 from typing import List
 
-from src.utils.loads import load_config
-from src.utils.setups import setup_logger
+from src.utils.config import load_config
+from src.utils.logger import setup_logger
 
 class FeatureExtractor:
     """Extracts feature embeddings from object crops using a pretrained CNN."""
@@ -39,7 +39,7 @@ class FeatureExtractor:
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
         self.logger.info(f"Feature extractor {self.config['feature_extractor']['model_name']} \
-initialized - Embedding dim: {self.embedding_dim}")
+                           initialized - Embedding dim: {self.embedding_dim}")
     
     def extract(self, image: np.ndarray) -> np.ndarray:
         """
@@ -103,15 +103,4 @@ initialized - Embedding dim: {self.embedding_dim}")
         embeddings = embeddings / (norms + 1e-9)
 
         return embeddings
-    
-# Test
-if __name__ == "__main__":
-    extractor = FeatureExtractor()
-    print("Feature extractor test: OK")
-    
-    # Create a dummy test image
-    dummy_image = np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
-    embedding = extractor.extract(dummy_image)
-    print(f"Embedding shape: {embedding.shape}")
-    print(f"Embedding norm: {np.linalg.norm(embedding):.6f}")
     

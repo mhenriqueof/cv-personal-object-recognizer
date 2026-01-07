@@ -1,0 +1,95 @@
+import cv2
+
+from src.utils.config import load_config
+from src.object_detector import ObjectDetector
+from src.feature_extractor import FeatureExtractor
+from src.memory_manager import MemoryManager
+
+def capture_4_views(object_name: str, camera_idx: int = 0) -> bool:
+    """
+    Interactive function to capture 4 views of an object (90º rotations).
+
+    Args:
+        object_name: Name of the object that will be registered.
+        camera_idx: The index of the camera used (default = 0).
+    """
+    
+    config = load_config()
+    detector = ObjectDetector()
+    extractor = FeatureExtractor()
+    memory = MemoryManager()
+
+    cap = cv2.VideoCapture(camera_idx)
+    if not cap.isOpened():
+        print("Error: could not open camera.")
+        return False
+    
+    print("\n"
+          f"Registration for: '{object_name}'")
+    print("-" * 50)
+    print("Instructions:")
+    print("1. Hold the object in front of the camera.")
+    print("2. Press [Space] to capture when the object is detected.")
+    print("3. Rotate object ~90º after each capture.")
+    print("4. Press [Q] to quit early.")
+    print("-" * 50)
+
+    captures = []
+    angles = ["0º (front)", "90º", "180º (back)", "270º"]
+    
+    for view_idx, angle in enumerate(angles, start=1):
+        print("\n"
+              f"View {view_idx}/4: {angle}")
+        
+        captured = False
+        while not captured:
+            ok, frame = cap.read()
+            if not ok:
+                print(f"Failed to read from camera with index {camera_idx}.")
+                break
+            
+            # Detect object
+            box = detector.detect(frame)
+
+            # Display
+            display_frame = frame.copy()
+            if box is not None:
+                x1, y1, x2, y2 = box
+                cv2.rectangle(display_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.putText(display_frame, f"View {view_idx}: {angle}",
+                            (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                cv2.putText(display_frame, "Press [Space] to capture",
+                            (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+            else:
+                cv2.putText(display_frame, "No object detected - move closer",
+                            (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                
+            cv2.imshow(f"Register: {object_name}", display_frame)
+
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('q'):
+                print("Registration cancelled.")
+                cap.release()
+                cv2.destroyAllWindows()
+                return False
+            if key == 32 and box is not None: # 32 = Space
+                # Capture and crop
+                crop = detector.crop_object(frame, box)
+                captures.append(crop)
+                captured = True
+
+                # Show captured image briefly
+                cv2.imshow("Captured", crop)
+                cv2.waitKey(500)
+                cv2.destroyWindow("Captured")
+
+                print(f"Captured view {view_idx}")
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+    if len(captures) != 4:
+        print(f"Only captures {len(captures)} images (need 4).")
+        return False
+    
+    print()

@@ -1,4 +1,6 @@
 import cv2
+import os
+import sys
 
 from src.utils.config import load_config
 from src.object_detector import ObjectDetector
@@ -92,4 +94,47 @@ def capture_4_views(object_name: str, camera_idx: int = 0) -> bool:
         print(f"Only captures {len(captures)} images (need 4).")
         return False
     
-    print()
+    print("\n"
+          "Processing captures...")
+
+    # Extract embeddings from all 4 captures
+    embeddings = extractor.extract_batch(captures)
+
+    # Add to memory
+    memory.add_object(object_name, embeddings)
+
+    # Verify it was saved
+    prototypes, labels = memory.get_all_prototypes()
+    if object_name in labels:
+        print(f"Sucessfully registered '{object_name}'.")
+        print(f"  Database now has {len(labels)} {'object' if len(labels) == 1 else 'objects'}.")
+        return True
+    else:
+        print("Failed to save object to database.")
+        return False
+    
+def main():
+    print("\n" +
+          "-" * 50)
+    print("Personal Object Registration")
+    print("-" * 50)
+
+    # Get object name
+    object_name = input("\n"
+                        "Enter the object name (e.g. \"My Mug\"): ").strip()
+    if not object_name:
+        print("Object name cannot be empty.")
+        return
+    
+    # Run capture
+    success = capture_4_views(object_name)
+
+    if success:
+        print("\n"
+              "Registration complete!")
+        print("You can now run recognition mode.")
+    else:
+        print("Registration failed.")
+
+if __name__ == '__main__':
+    main()

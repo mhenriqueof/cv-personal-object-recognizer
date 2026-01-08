@@ -51,9 +51,9 @@ class MemoryManager:
         
         Args:
             label: Object name.
-            embeddings: List of embedding vectors (should be 4, one every 90 degrees).
+            embeddings: numpy array of shape (n_samples, embedding_dim).
         """
-        if not embeddings:
+        if embeddings is None:
             self.logger.error("No embeddings provided.")
             return
         
@@ -67,7 +67,7 @@ class MemoryManager:
         
         self.database[label] = {
             'prototype': prototype,
-            'num_images': len(embeddings)
+            'num_images': embeddings.shape[0]
         }
         
         self._save_database()

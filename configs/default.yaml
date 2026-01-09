@@ -1,8 +1,7 @@
 # Model Settings
 detector:
-  model_name: "ssd_mobilenet_v3_large" # We'll use a TorchVision SSD
+  model_name: "yolo11n.pt"
   confidence_threshold: 0.5 # Min confidence to consider a detection
-  target_size: 320 # Input size for the detector (smaller = faster)
 
 feature_extractor:
   model_name: "mobilenet_v3_small"

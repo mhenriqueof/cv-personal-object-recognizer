@@ -2,13 +2,13 @@ import numpy as np
 import torch
 import cv2
 from typing import Optional, Tuple
-from torchvision.models.detection import ssdlite320_mobilenet_v3_large,SSDLite320_MobileNet_V3_Large_Weights
+from ultralytics import YOLO # type: ignore
 
 from src.utils.config import load_config
 from src.utils.logger import setup_logger
 
 class ObjectDetector:
-    """A lightweitght object detector to find the most prominent object in a frame."""
+    """Responsible for object detector to find the most prominent object in a frame."""
     def __init__(self):
         self.logger = setup_logger(self.__class__.__name__)
         self.config = load_config()
@@ -16,18 +16,12 @@ class ObjectDetector:
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.logger.info(f"Loading detector on {self.device}.")
         
-        # Load pre-trained SSD with MobileNetV3 backbone
-        self.model = ssdlite320_mobilenet_v3_large(
-            weights=SSDLite320_MobileNet_V3_Large_Weights.DEFAULT
-        )
-        self.model.to(self.device)
-        self.model.eval()
-
-        # Preprocess transform
-        self.transform = SSDLite320_MobileNet_V3_Large_Weights.DEFAULT.transforms()
+        # Load YOLO Nano model
+        self.model_name = self.config['detector']['model_name']
+        self.model = YOLO(self.model_name)
         
         self.confidence_threshold = self.config['detector']['confidence_threshold']
-        self.logger.info("Detector initialized.")
+        self.logger.info(f"YOLO detector initialized (model: {self.model_name}).")
 
     def detect(self, frame: np.ndarray) -> Optional[Tuple[int, int, int, int]]:
         """
@@ -37,22 +31,26 @@ class ObjectDetector:
             frame: BGR image from OpenCV.
             
         Returns:
-            Optional bounding box (x1, y1, x2, y2) in original coordinates,
-            or None if no confident detection.
+            Optional bounding box (x1, y1, x2, y2) in original coordinates, or None if no
+            confident detection.
         """
-        # Convert BGR to RGB
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # Run YOLO inference
+        results = self.model(frame,
+                             conf=self.confidence_threshold,
+                             verbose=False,
+                             device=self.device)
 
-        # Apply transform and add batch dimension
-        input_tensor = self.transform(torch.from_numpy(frame_rgb).permute(2, 0, 1))
-        input_tensor = input_tensor.unsqueeze(0).to(self.device)
-
-        with torch.no_grad():
-            predictions = self.model(input_tensor)[0]
-
-        boxes = predictions['boxes'].cpu().numpy()
-        scores = predictions['scores'].cpu().numpy()
-        labels = predictions['labels'].cpu().numpy()
+        if len(results) == 0 or results[0].boxes is None:
+            return None
+        
+        
+        # Get boxes, scores, labels
+        boxes = results[0].boxes.xyxy.cpu().numpy()
+        scores = results[0].boxes.conf.cpu().numpy()
+        labels = results[0].boxes.cls.cpu().numpy()
+        
+        if len(boxes) == 0:
+            return None
         
         # 1. Filter by confidence
         is_confident = (scores >= self.confidence_threshold)
@@ -65,11 +63,20 @@ class ObjectDetector:
         if not np.any(valid_indices):
             return None
         
-        # Get the index of the highest condifence detection
-        best_idx = np.argmax(scores[valid_indices])
-        best_box = boxes[valid_indices][best_idx].astype(int)
+        # Filter out 'person' class
+        person_indices = np.where(labels == 0)[0]
+        valid_indices = np.setdiff1d(np.arange(len(boxes)), person_indices)
+        
+        if len(valid_indices) == 0:
+            return None
+        
+        # Get boxes excluding persons
+        boxes_no_person = boxes[valid_indices]
+        scores_no_person = scores[valid_indices]
+        
+        best_idx = np.argmax(scores_no_person)
 
-        # Convert to (x1, y1, x2, y2)
+        best_box = boxes_no_person[best_idx].astype(int)
         x1, y1, x2, y2 = best_box
         
         # Ensure box is within frame boundaries

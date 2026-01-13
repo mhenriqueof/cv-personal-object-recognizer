@@ -1,7 +1,7 @@
 # Model Settings
 detector:
-  model_name: "yolo11n.pt"
-  confidence_threshold: 0.5 # Min confidence to consider a detection
+  model_name: "models/yolo11n.pt"
+  confidence_threshold: 0.4 # Min confidence to consider a detection
 
 feature_extractor:
   model_name: "mobilenet_v3_small"
@@ -21,3 +21,4 @@ recognition:
 # Data Paths
 paths:
   objects_database: 'data/objects_db.json'
+  raw_images: 'data/raw_images'

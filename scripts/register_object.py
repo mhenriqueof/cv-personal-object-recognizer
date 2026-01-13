@@ -1,13 +1,12 @@
 import cv2
 import os
-import sys
 
 from src.utils.config import load_config
 from src.object_detector import ObjectDetector
 from src.feature_extractor import FeatureExtractor
 from src.memory_manager import MemoryManager
 
-def capture_4_views(object_name: str, camera_idx: int = 0) -> bool:
+def capture_4_views(object_name: str, camera_idx: int = 0, save_images: bool = False) -> bool:
     """
     Interactive function to capture 4 views of an object (90º rotations).
 
@@ -68,24 +67,37 @@ def capture_4_views(object_name: str, camera_idx: int = 0) -> bool:
                 
             cv2.imshow(f"Register: {object_name}", display_frame)
 
+            # Keyboard input
             key = cv2.waitKey(1) & 0xFF
+            
             if key == ord('q'):
                 print("Registration cancelled.")
                 cap.release()
                 cv2.destroyAllWindows()
                 return False
-            if key == 32 and box is not None: # 32 = Space
+            
+            elif key == 32 and box is not None: # 32 = [Space]
                 # Capture and crop
                 crop = detector.crop_object(frame, box)
                 captures.append(crop)
                 captured = True
+                
+                # Save captured image
+                if save_images:
+                    raw_images_dir = config['paths']['raw_images']
+                    object_dir = os.path.join(raw_images_dir, object_name)
+                    os.makedirs(os.path.dirname(object_dir), exist_ok=True)
+
+                    image_path = os.path.join(object_dir, f'{view_idx:02d}.jpg')
+                    cv2.imwrite(image_path, crop)
+                    print(f" Saved: {image_path}")
 
                 # Show captured image briefly
                 cv2.imshow("Captured", crop)
                 cv2.waitKey(500)
                 cv2.destroyWindow("Captured")
 
-                print(f"Captured view {view_idx}")
+                print(f" Captured view {view_idx}")
 
     cap.release()
     cv2.destroyAllWindows()
@@ -127,7 +139,7 @@ def main():
         return
     
     # Run capture
-    success = capture_4_views(object_name)
+    success = capture_4_views(object_name, save_images=True)
 
     if success:
         print("\n"

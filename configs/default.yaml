@@ -15,7 +15,7 @@ registration:
 
 # Recognition Settings
 recognition:
-  similarity_threshold_high: 0.85 # Above this, recognize the object
+  similarity_threshold_high: 0.8 # Above this, recognize the object
   similarity_threshold_low: 0.5 # Below this, consider it unknown
 
 # Data Paths

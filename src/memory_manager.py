@@ -1,8 +1,10 @@
+import cv2
 import os
 import json
 import numpy as np
 
 from typing import Dict, List, Tuple
+from pathlib import Path
 
 from src.utils.logger import setup_logger
 from src.utils.config import load_config
@@ -90,6 +92,39 @@ class MemoryManager:
             labels.append(label)
 
         return prototypes, labels
+    
+    def get_raw_images_of_object(self, object_name: str) -> List:
+        """
+        Get all raw images of an object.
+        
+        Args:
+            object_name (str): name of the object, will be searched its corresponding folder.
+        
+        Returns:
+            captures: list of images in np.ndarray.        
+        """
+        images_list = []
+
+        # Object folder path
+        raw_images_dir = self.config['paths']['raw_images']
+        object_path = Path(raw_images_dir) / object_name
+        if not object_path.exists():
+            print(f" Error: Could not find '{object_path}' folder.")
+            return images_list
+
+        # Get images
+        for file_path in object_path.glob("*.jpg"):
+            img = cv2.imread(str(file_path))
+            
+            if img is not None:
+                images_list.append(img)
+            else:
+                print(f" Could not read the image '{file_path}'.")
+            
+        print(f"All images of object '{object_name}' loaded.")
+        
+        return images_list
+        
 
     def clear(self) -> None:
         """Clear all data."""

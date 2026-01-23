@@ -21,7 +21,7 @@ class ObjectDetector:
         self.model = YOLO(self.model_name)
         
         self.confidence_threshold = self.config['detector']['confidence_threshold']
-        self.logger.info(f"YOLO detector initialized (model: {self.model_name}).")
+        self.logger.info(f"YOLO detector initialized '{self.model_name})'.")
 
     def detect(self, frame: np.ndarray) -> Optional[Tuple[int, int, int, int]]:
         """

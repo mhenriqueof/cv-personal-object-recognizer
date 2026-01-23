@@ -1,6 +1,6 @@
 # Model Settings
 detector:
-  model_name: "models/yolo26n.pt"
+  model_name: "yolo/yolo26n.pt"
   confidence_threshold: 0.4 # Min confidence to consider a detection
 
 feature_extractor:
@@ -20,5 +20,5 @@ recognition:
 
 # Data Paths
 paths:
-  objects_database: 'data/objects_db.json'
-  raw_images: 'data/raw_images'
+  objects_database: 'data\objects_db.json'
+  raw_images: 'data\raw_images'

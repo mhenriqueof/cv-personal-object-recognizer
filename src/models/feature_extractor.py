@@ -38,8 +38,8 @@ class FeatureExtractor:
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
-        self.logger.info(f"Feature extractor {self.config['feature_extractor']['model_name']} \
-                           initialized - Embedding dim: {self.embedding_dim}")
+        self.logger.info(f"Feature extractor '{self.config['feature_extractor']['model_name']}' \
+initialized - Embedding dim: {self.embedding_dim}")
     
     def extract(self, image: np.ndarray) -> np.ndarray:
         """

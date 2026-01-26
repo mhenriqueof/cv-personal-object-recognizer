@@ -27,10 +27,10 @@ class RegisterObject:
         # Detect object
         box = self.detector.detect(frame)
 
-        # Display
+        # Frame to work on
         display_frame = frame.copy()
         
-        # Show texts
+        # Show texts in window
         if box is not None:
             x1, y1, x2, y2 = box
             cv2.rectangle(display_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
@@ -41,7 +41,8 @@ class RegisterObject:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
             
         if self.text_finish_instruction:
-            cv2.putText(display_frame, "When ready, press [F] to finish", (10, 60),
+            instruction_text = "Press [F] to finish (only one capture is enough)"
+            cv2.putText(display_frame, instruction_text, (10, 60),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
         # Keyboard input        

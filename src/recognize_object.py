@@ -21,37 +21,38 @@ class RecognizeObject:
         """
         Real-time object recognition from webcam.
         """
-        # 1. Detect object
+        # Detect object
         box = self.detector.detect(frame)
-
+        
+        # Frame to work on
         display_frame = frame.copy()
 
         if box is not None:
             x1, y1, x2, y2 = box
             
-            # 2. Crop object
+            # Crop object
             crop = self.detector.crop_object(frame, box)
 
-            # 3. Extract embedding
+            # Extract embedding
             embedding = self.extractor.extract(crop)
 
-            # 4. Get all prototypes from database
+            # Get all prototypes from database
             prototypes, labels = self.memory.get_all_prototypes()
 
             if len(prototypes) > 0:
-                # 5. Calculate similarities
+                # Calculate similarities
                 ## Convert prototype to numpy array
                 prototypes_array = np.array(prototypes)
 
                 # Cosine similarity: dot product for normalized vectors
                 similarities = np.dot(prototypes_array, embedding)
 
-                # 6. Find best match
+                # Find best match
                 best_idx = np.argmax(similarities)
                 best_similarity = similarities[best_idx]
                 best_label = labels[best_idx]
 
-                # 7. Decision logic
+                # Decision logic
                 if best_similarity >= self.threshold_high:
                     current_label = best_label
                     current_similarity = best_similarity
@@ -79,10 +80,15 @@ class RecognizeObject:
             label_text = f"{text}, I'm {current_similarity * 100 :.2f}% sure."
             cv2.putText(display_frame, label_text, (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
-
+            
         else:
             # No object detected
             cv2.putText(display_frame, "No object detected", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-            
+        
+        # Show instructions
+        instructions_text = "[R] to register new object, [C] to clean database"
+        cv2.putText(display_frame, instructions_text, (10, 60),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)            
+
         return display_frame

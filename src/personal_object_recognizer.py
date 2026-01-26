@@ -40,11 +40,12 @@ class PersonalObjectRecognizer:
             elif key == ord('r'):
                 self.new_object_name = get_object_name()
                 self.mode = SystemMode.REGISTER
+            elif key == ord('c'):
+                self.memory.clear()
             
             # System/Layout modes
             if self.mode == SystemMode.REGISTER:
                 display_frame, self.mode = self.reg.register(frame, key, self.new_object_name)
-
             else:
                 display_frame = self.rec.recognize(frame)
                 

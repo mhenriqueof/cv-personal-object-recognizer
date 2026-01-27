@@ -11,6 +11,7 @@ from typing import List
 
 from src.utils.config import load_config
 from src.utils.logger import setup_logger
+from src.utils.seed import set_seed
 
 class FeatureExtractor:
     """Extracts feature embeddings from object crops using a pretrained CNN."""
@@ -19,15 +20,10 @@ class FeatureExtractor:
         self.config = load_config()
         
         # Set all random seeds for reproducibility
-        self._set_seed(42)
+        set_seed(42)
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.logger.info(f"Loading feature extractor on {self.device}.")
-        
-        # Set deterministic algorithms for CUDA
-        if torch.cuda.is_available():
-            torch.backends.cudnn.deterministic = True
-            torch.backends.cudnn.benchmark = False
 
         # Load pretrained MobileNetV3-Small
         self.model = mobilenet_v3_small(weights=MobileNet_V3_Small_Weights.DEFAULT)
@@ -53,15 +49,6 @@ class FeatureExtractor:
         
         self.logger.info(f"Feature extractor '{self.config['feature_extractor']['model_name']}' \
 initialized - Embedding dim: {self.embedding_dim}")
-        
-    def _set_seed(self, seed: int) -> None:
-        """Set all random seeds for reproducibility."""        
-        random.seed(seed)
-        np.random.seed(seed)
-        torch.manual_seed(seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed(seed)
-            torch.cuda.manual_seed_all(seed)
     
     def extract(self, image: np.ndarray) -> np.ndarray:
         """

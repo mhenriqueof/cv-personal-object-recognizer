@@ -1,3 +1,4 @@
+import shutil
 import cv2
 import os
 import json
@@ -128,6 +129,20 @@ class MemoryManager:
 
     def clear(self) -> None:
         """Clear all data."""
+        # Clear JSON
         self.database = {}
         self._save_database()
         self.logger.info("Database cleared.")
+
+        # Clear raw images
+        raw_images_dir = self.config['paths']['raw_images']
+        
+        if os.path.exists(raw_images_dir):
+            try:
+                shutil.rmtree(raw_images_dir)
+                print(" Raw images folder deleted.")
+            except Exception as e:
+                print(" Error: Couldn't delete raw images folder.")
+        else:
+            print(" Raw images folder doesn't exist.")
+            

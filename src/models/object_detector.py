@@ -6,12 +6,16 @@ from ultralytics import YOLO # type: ignore
 
 from src.utils.config import load_config
 from src.utils.logger import setup_logger
+from src.utils.seed import set_seed
 
 class ObjectDetector:
     """Responsible for object detector to find the most prominent object in a frame."""
     def __init__(self):
         self.logger = setup_logger(self.__class__.__name__)
         self.config = load_config()
+        
+        # Set all random seeds for reproducibility
+        set_seed()
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.logger.info(f"Loading detector on {self.device}.")

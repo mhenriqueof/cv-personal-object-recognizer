@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import cv2
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 from ultralytics import YOLO # type: ignore
 
 from src.utils.config import load_config
@@ -27,26 +27,30 @@ class ObjectDetector:
         self.confidence_threshold = self.config['detector']['confidence_threshold']
         self.logger.info(f"YOLO detector initialized '{self.model_name})'.")
 
-    def detect(self, frame: np.ndarray) -> Optional[Tuple[int, int, int, int]]:
+    def detect(self, frame: np.ndarray, max_objects: int = 3) -> List[Tuple[int, int, int, int]]:
         """
-        Detects objects and returns the bounding box of the most confident detection.
+        Detects multiple objects using YOLO.
         
         Args:
             frame: BGR image from OpenCV.
+            max_objects: Maximum number of objects to return.
             
         Returns:
-            Optional bounding box (x1, y1, x2, y2) in original coordinates, or None if no
-            confident detection.
+            List of bounding box (x1, y1, x2, y2) sorted by size (largest first). \n
+            Empty list if no objects detected.
         """
+        # Make a copy to ensure we don't modify input
+        frame_copy = frame.copy()
+        
         # Run YOLO inference
-        results = self.model(frame,
+        results = self.model(frame_copy,
                              conf=self.confidence_threshold,
+                             iou=0.45,
                              verbose=False,
                              device=self.device)
 
         if len(results) == 0 or results[0].boxes is None:
-            return None
-        
+            return []
         
         # Get boxes, scores, labels
         boxes = results[0].boxes.xyxy.cpu().numpy()
@@ -54,48 +58,53 @@ class ObjectDetector:
         labels = results[0].boxes.cls.cpu().numpy()
         
         if len(boxes) == 0:
-            return None
+            return []
         
-        # 1. Filter by confidence
-        is_confident = (scores >= self.confidence_threshold)
-        # 2. Filter by label: exclude the 'person' label (COCO label index 1)
-        is_not_person = (labels != 1)
+        # Filter out unwanted classes (person = 0)
+        unwanted_classes = [0]
+        valid_mask = ~np.isin(labels, unwanted_classes)
 
-        # Combine the masks to get valid indices
-        valid_indices = is_confident & is_not_person
+        if not np.any(valid_mask):
+            return []
+                    
+        # Get boxes excluding person
+        boxes_filtered = boxes[valid_mask]
+        scores_filtered = scores[valid_mask]
         
-        if not np.any(valid_indices):
-            return None
-        
-        # Filter out 'person' class
-        person_indices = np.where(labels == 0)[0]
-        valid_indices = np.setdiff1d(np.arange(len(boxes)), person_indices)
-        
-        if len(valid_indices) == 0:
-            return None
-        
-        # Get boxes excluding persons
-        boxes_no_person = boxes[valid_indices]
-        scores_no_person = scores[valid_indices]
-        
-        best_idx = np.argmax(scores_no_person)
+        # Calculate areas for sorting
+        areas = (boxes_filtered[:, 2] - boxes_filtered[:, 0]) * \
+                (boxes_filtered[:, 3] - boxes_filtered[:, 1])
 
-        best_box = boxes_no_person[best_idx].astype(int)
-        x1, y1, x2, y2 = best_box
-        
-        # Ensure box is within frame boundaries
+        # Sort by area (largest first)
+        sorted_indices = np.argsort(areas)[::-1]
+
+        # Take top max_objects
+        top_indices = sorted_indices[:max_objects]
+
+        valid_boxes = []
         h, w = frame.shape[:2]
-        x1 = max(0, x1)
-        y1 = max(0, y1)
-        x2 = min(w, x2)
-        y2 = min(h, y2)
 
-        # Check if box is valid (non-zero area)
-        if x2 <= x1 or y2 <= y1:
-            return None
-        
-        self.logger.debug(f"Detected box: ({x1}, {y1}), ({x2}, {y2})")
-        return (x1, y1, x2, y2)
+        for idx in top_indices:
+            box = boxes_filtered[idx].astype(int)
+            x1, y1, x2, y2 = box
+
+            # Clamp to frame boundaries
+            x1 = max(0, min(x1, w - 1))
+            y1 = max(0, min(y1, h - 1))
+            x2 = max(1, min(x2, w))
+            y2 = max(1, min(y2, h))
+
+            # Skip if too small
+            if (x2 - x1) < 20 or (y2 - y1) < 20:
+                continue
+            
+            valid_boxes.append((x1, y1, x2, y2))
+
+            if len(valid_boxes) >= max_objects:
+                break
+            
+        self.logger.debug(f"Detected {len(valid_boxes)} objects.")
+        return valid_boxes
 
     def crop_object(self, frame: np.ndarray, box: Tuple[int, int, int, int]) -> np.ndarray:
         """Crops the frame using the bounding box."""

@@ -17,6 +17,7 @@ registration:
 recognition:
   similarity_threshold_high: 0.8 # Above this, recognize the object
   similarity_threshold_low: 0.5 # Below this, consider it unknown
+  max_objects: 3 # Maximum objects to detect and recognize
 
 # Data Paths
 paths:

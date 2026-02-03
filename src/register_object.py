@@ -23,9 +23,13 @@ class RegisterObject:
         Args:
             frame (np.ndarray): camera frame coming from CameraStream.
             object_name: Name of the object that will be registered.
-        """        
+        """
         # Detect object
-        box = self.detector.detect(frame)
+        boxes = self.detector.detect(frame, max_objects=1)
+        if boxes:
+            box = boxes[0]
+        else:
+            box = None
 
         # Frame to work on
         display_frame = frame.copy()

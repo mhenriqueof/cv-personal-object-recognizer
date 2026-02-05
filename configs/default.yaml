@@ -15,9 +15,15 @@ registration:
 
 # Recognition Settings
 recognition:
-  similarity_threshold_high: 0.8 # Above this, recognize the object
-  similarity_threshold_low: 0.5 # Below this, consider it unknown
+  similarity_threshold_high: 0.85 # Above this, recognize the object
+  similarity_threshold_low: 0.65 # Below this, consider it unknown
   max_objects: 3 # Maximum objects to detect and recognize
+
+# Performance Settings
+performance:
+  detection_interval: 3 # Detect every N frames (1 = every frame)
+  batch_processing: true # Use batch embedding extraction
+  enable_caching: true # Cache prototypes between frames
 
 # Data Paths
 paths:

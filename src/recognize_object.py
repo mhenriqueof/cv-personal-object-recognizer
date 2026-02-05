@@ -20,6 +20,11 @@ class RecognizeObject:
         self.max_objects = self.config['recognition']['max_objects']
         self.threshold_high = self.config['recognition']['similarity_threshold_high']
         self.threshold_low = self.config['recognition']['similarity_threshold_low']
+        
+        # Frame Skipping
+        self.detection_interval = 3 # Detect every 3rd frame
+        self.frame_counter = 0
+        self.last_boxes = [] # Check last detection
 
     def recognize(self, frame: np.ndarray) -> np.ndarray:
         """
@@ -28,18 +33,23 @@ class RecognizeObject:
         Returns:
             Frame with visualizations drawn.
         """
-        # Frame to work on
         display_frame = frame.copy()
         
+        # Smart Detection: Only run detection every N frames
+        self.frame_counter += 1
+        
+        if self.frame_counter % self.detection_interval == 0 or not self.last_boxes:
+            # Run fresh detection
+            boxes = self.detector.detect(frame, max_objects=self.max_objects)
+            self.last_boxes = boxes
+        else:
+            # Use cached detection
+            boxes = self.last_boxes
+                    
         # Show instructions
         instructions_text = "[R] to register new object, [C] to clean database"
         cv2.putText(display_frame, instructions_text, (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)    
-        
-        # Detect objects
-        boxes = self.detector.detect(frame, max_objects=self.max_objects)
-        if not boxes:
-            return display_frame
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         
         # Get database prototypes
         prototypes, labels = self.memory.get_all_prototypes()
@@ -50,61 +60,65 @@ class RecognizeObject:
             # Still show detections in gray
             for i, box in enumerate(boxes):
                 color = (128, 128, 128) # Gray for unknown
-                self._draw_detection(display_frame, box, f"Object {i+1}", 0.0, color)
+                self._draw_detection(display_frame, box, f"Object {i+1}", color)
             return display_frame
+    
+        # Batch crop all objects
+        crops = []
+        valid_boxes = []
+
+        for box in boxes:
+            crop = self.detector.crop_object(frame, box)
+            # Skip very small crops
+            if crop.shape[0] > 10 and crop.shape[1] > 10:
+                crops.append(crop)   
+                valid_boxes.append(box)
+                
+        if not crops:
+            return display_frame
+        
+        # Batch extraction (single model pass for all crops)
+        embeddings = self.extractor.extract_batch(crops)
         
         # Convert prototypes to numpy array for batch comparasion
         prototypes_array = np.array(prototypes)
+        
+        # Batch Similarity Computation (Matrix multiplication)
+        # embeddings shape: (n_objects, 576)
+        # prototypes_array shape: (n_prototypes. 576)
+        # similarities shape: (n_objects, n_prototypes)
+        similarities = np.dot(embeddings, prototypes_array.T)
 
-        # Process each detected object
-        for i, box in enumerate(boxes):
-            # Crop object
-            crop = self.detector.crop_object(frame, box)
-
-            # Extract embedding
-            embedding = self.extractor.extract(crop)
-
-            # Compare with all prototypes
-            similarities = np.dot(prototypes_array, embedding)
-
+        # Process results
+        for i, (box, object_similarities) in enumerate(zip(valid_boxes, similarities)):
             # Find best match
-            best_idx = np.argmax(similarities)
-            best_similarity = similarities[best_idx]
+            best_idx = np.argmax(object_similarities)
+            best_similarity = object_similarities[best_idx]
             best_label = labels[best_idx]
 
             # Choose color for this object
-            color = self.colors[i % len(self.colors)]
 
             # Decision logic
             if best_similarity >= self.threshold_high:
+                color = self.colors[i % len(self.colors)]
                 label_text = f"{best_label} ({best_similarity:.2f})"
-                thickness = 2
             elif best_similarity >= self.threshold_low:
                 color = (0, 255, 255)  # Yellow
                 label_text = f"{best_label} ({best_similarity:.2f})"
-                thickness = 1
             else:
-                color = (0, 0, 255) # Red
-                label_text = f"Unknown ({best_similarity:.2f})"
-                thickness = 1
+                color = (128, 128, 128) # Gray for unknown
+                label_text = f"Object {i+1}"
                 
             # Draw bounding box and label
-            x1, y1, x2, y2 = box
-            cv2.rectangle(display_frame, (x1, y1), (x2, y2), color, thickness)
-            
-            # Put label above box
-            label_y = max(20, y1 - 10)
-            cv2.putText(display_frame, label_text, (x1, label_y),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)        
+            self._draw_detection(display_frame, box, label_text, color)
 
         return display_frame
 
-    def _draw_detection(self, frame, box, label, similarity, color):
+    def _draw_detection(self, frame, box, label_text, color):
         """Helps to draw a single detection."""
         x1, y1, x2, y2 = box
         cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
 
-        label_text = f"{label} ({similarity:.2f})"
         label_y = max(20, y1 - 10)
         cv2.putText(frame, label_text, (x1, label_y),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)

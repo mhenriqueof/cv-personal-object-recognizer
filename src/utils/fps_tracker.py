@@ -51,7 +51,12 @@ class FPSTracker:
         )
         
         x = w - text_width
-        y = text_height
+        y = text_height - 5
+        
+        cv2.rectangle(display_frame, 
+                     (x - 5, y - text_height),
+                     (x + text_width + 5, y),
+                     (0, 0, 0), -1)
         
         cv2.putText(display_frame, fps_text, (x, y),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)

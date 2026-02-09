@@ -23,7 +23,6 @@ class ObjectDetector:
         # Load YOLO Nano model
         self.model_name = self.config['detector']['model_name']
         self.model = YOLO(self.model_name)
-        self.model.overrides['imgsz'] = 480
         
         self.confidence_threshold = self.config['detector']['confidence_threshold']
         self.logger.info(f"YOLO detector initialized '{self.model_name}'.")

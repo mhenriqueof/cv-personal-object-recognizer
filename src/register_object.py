@@ -5,7 +5,9 @@ import os
 from datetime import datetime
 from typing import Tuple
 
+from src.utils.input_object_name import input_object_name
 from src.utils.system_mode import SystemMode
+from src.utils.augmentation import Augmentation
 
 class RegisterObject:
     def __init__(self, config, detector, extractor, memory):
@@ -13,10 +15,13 @@ class RegisterObject:
         self.detector = detector
         self.extractor = extractor
         self.memory = memory
+        self.augmenter = Augmentation()
         
-        self.text_finish_instruction = False
+        self.object_name = None
         
-    def register(self, frame: np.ndarray, key: int, object_name: str) -> Tuple[np.ndarray, SystemMode]:
+        self.finish_instruction = False
+        
+    def register(self, frame: np.ndarray, key: int) -> Tuple[np.ndarray, SystemMode]:
         """
         Interactive function to capture views of an object (90º rotations).
 
@@ -24,6 +29,9 @@ class RegisterObject:
             frame (np.ndarray): camera frame coming from CameraStream.
             object_name: Name of the object that will be registered.
         """
+        if self.object_name is None:
+            self.object_name = input_object_name()
+        
         # Detect object
         boxes = self.detector.detect(frame, max_objects=1)
         if boxes:
@@ -44,7 +52,7 @@ class RegisterObject:
             cv2.putText(display_frame, "No object detected", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
             
-        if self.text_finish_instruction:
+        if self.finish_instruction:
             instruction_text = "Press [F] to finish (only one capture is enough)"
             cv2.putText(display_frame, instruction_text, (10, 60),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
@@ -56,7 +64,7 @@ class RegisterObject:
             
             # Create folder to save
             raw_images_dir = self.config['paths']['raw_images']
-            object_dir = os.path.join(raw_images_dir, object_name)
+            object_dir = os.path.join(raw_images_dir, self.object_name)
             os.makedirs(object_dir, exist_ok=True)
             
             # Save captured image
@@ -75,31 +83,39 @@ class RegisterObject:
             cv2.waitKey(1000)
             cv2.destroyWindow("Captured")
             
-            self.text_finish_instruction = True
+            self.finish_instruction = True
             
         elif key == ord('f'):
             print("\n"
                   "Processing captures...")
             
-            captures = self.memory.get_raw_images_of_object(object_name)
+            # Get all raw images
+            raw_captures = self.memory.get_raw_images_of_object(self.object_name)
+            
+            # Augment raw images
+            all_images = self.augmenter.augment_batch(raw_captures)
 
-            # Extract embeddings from all 4 captures
-            embeddings = self.extractor.extract_batch(captures)
+            # Extract embeddings from all
+            embeddings = self.extractor.extract_batch(all_images)
 
             # Add to memory
-            self.memory.add_object(object_name, embeddings)
+            self.memory.add_object(self.object_name, embeddings)
 
             # Verify it was saved
             prototypes, labels = self.memory.get_all_prototypes()
-            if object_name in labels:
-                print(f"Sucessfully registered '{object_name}'.")
+            if self.object_name in labels:
+                print(f"Sucessfully registered '{self.object_name}'.")
                 print(f"  Database now has {len(labels)} {'object' if len(labels) == 1 else 'objects'}.")
             else:
                 print("Failed to save object to database.")
         
             print("Registration finished.")
             
-            self.text_finish_instruction = False
+            # Save augmented images
+            self.memory.save_augmented_images(self.object_name, all_images)
+
+            self.object_name = None
+            self.finish_instruction = False
             
             return display_frame, SystemMode.RECOGNIZE
             

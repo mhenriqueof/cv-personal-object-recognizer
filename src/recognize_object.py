@@ -1,20 +1,16 @@
 import cv2
 import numpy as np
 
+from typing import Tuple
+
+from src.utils.system_mode import SystemMode
+
 class RecognizeObject:
     def __init__(self, config, detector, extractor, memory):
         self.config = config
         self.detector = detector
         self.extractor = extractor
         self.memory = memory
-        
-        # Colors for different objects
-        self.colors = [
-            (0, 255, 0),    # Green
-            (255, 0, 0),    # Blue
-            (255, 0, 255),  # Magenta
-            (0, 165, 255),  # Orange
-        ]
         
         # Get recognition settings
         self.max_objects = self.config['recognition']['max_objects']
@@ -26,7 +22,7 @@ class RecognizeObject:
         self.frame_counter = 0
         self.last_boxes = [] # Check last detection
 
-    def recognize(self, frame: np.ndarray) -> np.ndarray:
+    def recognize(self, frame: np.ndarray, key: int) -> Tuple[np.ndarray, SystemMode]:
         """
         Recognizes multiple objects in frame.
         
@@ -47,9 +43,14 @@ class RecognizeObject:
             boxes = self.last_boxes
                     
         # Show instructions
-        instructions_text = "[R] to register new object, [C] to clean database"
+        instructions_text = "[R] register new object [C] clean database [Q] Quit"
         cv2.putText(display_frame, instructions_text, (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        
+        if key == ord('r'):
+            return display_frame, SystemMode.REGISTER
+        elif key == ord('c'):
+            self.memory.clear()
         
         # Get database prototypes
         prototypes, labels = self.memory.get_all_prototypes()
@@ -59,9 +60,9 @@ class RecognizeObject:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
             # Still show detections in gray
             for i, box in enumerate(boxes):
-                color = (128, 128, 128) # Gray for unknown
+                color = (11, 11, 11) # Black for unknown
                 self._draw_detection(display_frame, box, f"Object {i+1}", color)
-            return display_frame
+            return display_frame, SystemMode.RECOGNIZE
     
         # Batch crop all objects
         crops = []
@@ -75,7 +76,7 @@ class RecognizeObject:
                 valid_boxes.append(box)
                 
         if not crops:
-            return display_frame
+            return display_frame, SystemMode.RECOGNIZE
         
         # Batch extraction (single model pass for all crops)
         embeddings = self.extractor.extract_batch(crops)
@@ -100,19 +101,19 @@ class RecognizeObject:
 
             # Decision logic
             if best_similarity >= self.threshold_high:
-                color = self.colors[i % len(self.colors)]
+                color = (0, 255, 0)  # Green
                 label_text = f"{best_label} ({best_similarity:.2f})"
             elif best_similarity >= self.threshold_low:
                 color = (0, 255, 255)  # Yellow
                 label_text = f"{best_label} ({best_similarity:.2f})"
             else:
-                color = (128, 128, 128) # Gray for unknown
+                color = (11, 11, 11) # Black for unknown
                 label_text = f"Object {i+1}"
                 
             # Draw bounding box and label
             self._draw_detection(display_frame, box, label_text, color)
 
-        return display_frame
+        return display_frame, SystemMode.RECOGNIZE
 
     def _draw_detection(self, frame, box, label_text, color):
         """Helps to draw a single detection."""

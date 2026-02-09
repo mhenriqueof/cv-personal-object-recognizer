@@ -1,7 +1,7 @@
 # Model Settings
 detector:
   model_name: "yolo/yolo26n.pt"
-  confidence_threshold: 0.4 # Min confidence to consider a detection
+  confidence_threshold: 0.25 # Min confidence to consider a detection
 
 feature_extractor:
   model_name: "mobilenet_v3_small"
@@ -10,13 +10,12 @@ feature_extractor:
 
 # Registration Settings
 registration:
-  num_raw_captures: 4
-  num_augmentations_per_image: 3 # Will generate 5 augmented versions per raw capture
+  augmentation_strength: 0.2 # Controls how strong augmentations are
 
 # Recognition Settings
 recognition:
-  similarity_threshold_high: 0.85 # Above this, recognize the object
-  similarity_threshold_low: 0.65 # Below this, consider it unknown
+  similarity_threshold_high: 0.8 # Above this, recognize the object
+  similarity_threshold_low: 0.7 # Below this, consider it unknown
   max_objects: 3 # Maximum objects to detect and recognize
 
 # Performance Settings

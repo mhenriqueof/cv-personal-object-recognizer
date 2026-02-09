@@ -126,7 +126,6 @@ class MemoryManager:
         
         return images_list
         
-
     def clear(self) -> None:
         """Clear all data."""
         # Clear JSON
@@ -146,3 +145,17 @@ class MemoryManager:
         else:
             print(" Raw images folder doesn't exist.")
             
+    def save_augmented_images(self, object_name: str, images: List[np.ndarray]) -> None:
+        """Save augmented images."""
+        save_dir = self.config['paths']['raw_images']
+        object_path = Path(save_dir) / object_name
+        
+        if not object_path.exists():
+            print(f" Error: Could not find '{object_path}' folder.")
+            return
+        
+        for i, img in enumerate(images):
+            if i != 0:
+                cv2.imwrite(f"{object_path}/augment_{i:02d}.jpg", img)
+
+        print(f" Saved {len(images)} images to {save_dir}/")

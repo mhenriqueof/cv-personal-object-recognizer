@@ -1,7 +1,6 @@
 import numpy as np
 import torch
-import cv2
-from typing import Optional, Tuple, List
+from typing import Tuple, List
 from ultralytics import YOLO # type: ignore
 
 from src.utils.config import load_config
@@ -9,22 +8,28 @@ from src.utils.logger import setup_logger
 from src.utils.seed import set_seed
 
 class ObjectDetector:
-    """Responsible for object detector to find the most prominent object in a frame."""
+    """
+    YOLO-based object detector for finding prominent objects in frames.
+    
+    Uses YOLO for detection, filters out unwanted classes (persons) and returns sorted
+    bounding boxes.
+    """
     def __init__(self):
         self.logger = setup_logger(self.__class__.__name__)
         self.config = load_config()
         
         # Set all random seeds for reproducibility
         set_seed()
-
+        
+        # Check GPU available
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.logger.info(f"Loading detector on {self.device}.")
         
         # Load YOLO Nano model
         self.model_name = self.config['detector']['model_name']
         self.model = YOLO(self.model_name)
-        
         self.confidence_threshold = self.config['detector']['confidence_threshold']
+        
         self.logger.info(f"YOLO detector initialized '{self.model_name}'.")
 
     def detect(self, frame: np.ndarray, max_objects: int = 3) -> List[Tuple[int, int, int, int]]:
@@ -36,14 +41,11 @@ class ObjectDetector:
             max_objects: Maximum number of objects to return.
             
         Returns:
-            List of bounding box (x1, y1, x2, y2) sorted by size (largest first). \n
+            List of bounding box (x1, y1, x2, y2) sorted by size (largest first).
             Empty list if no objects detected.
         """
-        # Make a copy to ensure we don't modify input
-        frame_copy = frame.copy()
-        
         # Run YOLO inference
-        results = self.model(frame_copy,
+        results = self.model(frame,
                              conf=self.confidence_threshold,
                              iou=0.45,
                              verbose=False,
@@ -54,7 +56,6 @@ class ObjectDetector:
         
         # Get boxes, scores, labels
         boxes = results[0].boxes.xyxy.cpu().numpy()
-        scores = results[0].boxes.conf.cpu().numpy()
         labels = results[0].boxes.cls.cpu().numpy()
         
         if len(boxes) == 0:
@@ -69,7 +70,6 @@ class ObjectDetector:
                     
         # Get boxes excluding person
         boxes_filtered = boxes[valid_mask]
-        scores_filtered = scores[valid_mask]
         
         # Calculate areas for sorting
         areas = (boxes_filtered[:, 2] - boxes_filtered[:, 0]) * \

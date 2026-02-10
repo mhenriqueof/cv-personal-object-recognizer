@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 import torch
-import random
 
 from torch import nn
 from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
@@ -14,13 +13,18 @@ from src.utils.logger import setup_logger
 from src.utils.seed import set_seed
 
 class FeatureExtractor:
-    """Extracts feature embeddings from object crops using a pretrained CNN."""
+    """
+    Feature extractor using MobileNetV3-Small for object embeddings.
+    
+    Removes classification head, uses global average pooling 
+    and returns L2-normalized feature vectors.
+    """
     def __init__(self):
         self.logger = setup_logger(self.__class__.__name__)
         self.config = load_config()
         
         # Set all random seeds for reproducibility
-        set_seed(42)
+        set_seed()
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.logger.info(f"Loading feature extractor on {self.device}.")

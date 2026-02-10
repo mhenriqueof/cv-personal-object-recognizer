@@ -11,7 +11,12 @@ from src.utils.logger import setup_logger
 from src.utils.config import load_config
 
 class MemoryManager:
-    """Storage for objects. Stores only the average embedding (prototype) for each object."""
+    """
+    Manages object prototypes and raw images storage.
+    
+    Stores objects prototypes (average embeddings) in JSON database.
+    Manages raw and augmented images in filesystem.
+    """
     def __init__(self):
         self.logger = setup_logger(self.__class__.__name__)
         self.config = load_config()
@@ -56,17 +61,19 @@ class MemoryManager:
             label: Object name.
             embeddings: numpy array of shape (n_samples, embedding_dim).
         """
-        if embeddings is None:
+        if embeddings.size == 0:
             self.logger.error("No embeddings provided.")
             return
         
         # Calculate prototype (average of embeddings)
         prototype = np.mean(embeddings, axis=0)
         # Re-normalize the prototype
-        prototype = prototype / (np.linalg.norm(prototype) + 1e-9)
-
-        if label in self.database:
-            self.logger.warning(f"Object 'label' already exists. Overwriting.")
+        norm = np.linalg.norm(prototype)
+        if norm > 0:
+            prototype = prototype / norm
+        else:
+            self.logger.error("Zero-norm prototype, cannot add object.")
+            return
         
         self.database[label] = {
             'prototype': prototype,
@@ -126,6 +133,52 @@ class MemoryManager:
         
         return images_list
         
+    def save_augmented_images(self, object_name: str, images: List[np.ndarray]) -> None:
+        """Save augmented images."""
+        save_dir = self.config['paths']['raw_images']
+        object_path = Path(save_dir) / object_name
+        
+        if not object_path.exists():
+            print(f" Error: Could not find '{object_path}' folder.")
+            return
+        
+        for i, img in enumerate(images):
+            if i != 0:
+                cv2.imwrite(f"{object_path}/augment_{i:02d}.jpg", img)
+
+        print(f" Saved {len(images)} images to {save_dir}/")
+        
+    def delete_object(self, object_name: str) -> None:
+        """
+        Completely delete an object (prototype + images).
+        
+        Args:
+            object_name: Object to delete.
+            
+        Returns:
+            True if deleted successfully, False otherwise.
+        """
+        if object_name not in self.database:
+            self.logger.warning(f"Object '{object_name}' not found in database.")
+        
+        # Delete from database
+        del self.database[object_name]
+        self._save_database()
+
+        # Delete image folder
+        raw_images_dir = self.config['paths']['raw_images']
+        object_path = Path(raw_images_dir) / object_name
+        
+        if object_path.exists() and object_path.is_dir():
+            try:
+                shutil.rmtree(object_path)
+                self.logger.info(f"Deleted old images for '{object_name}'.")
+                self.logger.info(f"Deleted object '{object_name}' completely.")
+            except Exception as e:
+                self.logger.error(f"Failed to delete images for '{object_name}': {e}")
+        else:
+            self.logger.warning(f"Deleted '{object_name}' from database, but failed to delete images.")
+                        
     def clear(self) -> None:
         """Clear all data."""
         # Clear JSON
@@ -141,21 +194,7 @@ class MemoryManager:
                 shutil.rmtree(raw_images_dir)
                 print(" Raw images folder deleted.")
             except Exception as e:
-                print(" Error: Couldn't delete raw images folder.")
+                print(f" Error: Couldn't delete raw images folder: {e}")
         else:
             print(" Raw images folder doesn't exist.")
             
-    def save_augmented_images(self, object_name: str, images: List[np.ndarray]) -> None:
-        """Save augmented images."""
-        save_dir = self.config['paths']['raw_images']
-        object_path = Path(save_dir) / object_name
-        
-        if not object_path.exists():
-            print(f" Error: Could not find '{object_path}' folder.")
-            return
-        
-        for i, img in enumerate(images):
-            if i != 0:
-                cv2.imwrite(f"{object_path}/augment_{i:02d}.jpg", img)
-
-        print(f" Saved {len(images)} images to {save_dir}/")

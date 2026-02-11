@@ -1,15 +1,17 @@
 # Model Settings
 detector:
-  model_name: "yolo/yolo26n.pt"
+  model_name: "models/yolo26n.pt"
   confidence_threshold: 0.25 # Min confidence to consider a detection
+  iou_threshold: 0.45 # Non-max suppression threshold
 
 feature_extractor:
   model_name: "mobilenet_v3_small"
-  embedding_dim: 576 # For MobileNetV3-Small
-  input_size: 224
+  embedding_dim: 576 # MobileNetV3-Small last conv output
+  input_size: 224 # Images will be resized to 224x224 before feature extraction
 
 # Registration Settings
 registration:
+  max_captures: 4 # Maximum images for registration
   augmentation_strength: 0.2 # Controls how strong augmentations are
 
 # Recognition Settings
@@ -21,10 +23,8 @@ recognition:
 # Performance Settings
 performance:
   detection_interval: 3 # Detect every N frames (1 = every frame)
-  batch_processing: true # Use batch embedding extraction
-  enable_caching: true # Cache prototypes between frames
 
 # Data Paths
 paths:
-  objects_database: 'data\objects_db.json'
-  raw_images: 'data\raw_images'
+  objects_database: 'data/objects_db.json'
+  raw_images: 'data/raw_images'

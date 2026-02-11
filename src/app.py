@@ -61,7 +61,7 @@ class PersonalObjectRecognizer:
             
             # Keyboard input
             key = cv2.waitKey(1) & 0xFF
-            if key == ord('q'):
+            if (key == ord('q')) and (self.system_mode is SystemMode.RECOGNIZE):
                 self.camera.release_destroy()
                 break
                 

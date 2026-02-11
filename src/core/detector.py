@@ -28,7 +28,6 @@ class ObjectDetector:
         # Load YOLO Nano model
         self.model_name = self.config['detector']['model_name']
         self.model = YOLO(self.model_name)
-        self.confidence_threshold = self.config['detector']['confidence_threshold']
         
         self.logger.info(f"YOLO detector initialized '{self.model_name}'.")
 
@@ -46,8 +45,8 @@ class ObjectDetector:
         """
         # Run YOLO inference
         results = self.model(frame,
-                             conf=self.confidence_threshold,
-                             iou=0.45,
+                             conf=self.config['detector']['confidence_threshold'],
+                             iou=self.config['detector']['iou_threshold'],
                              verbose=False,
                              device=self.device)
 

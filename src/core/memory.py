@@ -143,8 +143,7 @@ class MemoryManager:
             return
         
         for i, img in enumerate(images):
-            if i != 0:
-                cv2.imwrite(f"{object_path}/augment_{i:02d}.jpg", img)
+            cv2.imwrite(f"{object_path}/augment_{i:02d}.jpg", img)
 
         print(f" Saved {len(images)} images to {save_dir}/")
         

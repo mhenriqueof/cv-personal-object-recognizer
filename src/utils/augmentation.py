@@ -8,8 +8,10 @@ from src.utils.logger import setup_logger
 
 class Augmentation:
     """
-    Deterministic image augmentation for object registration.
-    Always generates the same augmented images for the same input.
+    Simple brightness augmentantation for object registration.
+    
+    Generates brighter and darker version of input images to improve robustness 
+    to lighting conditions.
     """
     def __init__(self):
         self.config = load_config()
@@ -24,49 +26,33 @@ class Augmentation:
         """
         Generates augmentations for a single image.
         
-        Strategy: Creates 6 new images (7 in total):
-        1. Original
-        2. Rotate (180º)
-        4. Original + brightness up
-        5. Original + brightness down
-        6. Rotate + brightness up
-        7. Rotate + brightness down
+        Strategy: Creates 2 new images:
+        1. Original + brightness up
+        2. Original + brightness down
         
         Args:
             image: BGR image.
         
         Returns:
-            List of 6 augmented BGR images (deterministic order).
+            List of 2 augmented BGR images.
         """
-        original = image.copy()
-        augmented_images = [original]
-
-        # Rotate image (180º)
-        rotated = cv2.flip(original, -1)
-        augmented_images.append(rotated)
-
-        # Generate brightness variations for all three base images
-        base_images = [original, rotated]
-
-        for base_img in base_images:           
-            bright_up = self._adjust_brightness(base_img, +self.aug_strength)
-            bright_down = self._adjust_brightness(base_img, -self.aug_strength)
-
-            augmented_images.append(bright_up)
-            augmented_images.append(bright_down)
+        bright_up = self._adjust_brightness(image, +self.aug_strength)
+        bright_down = self._adjust_brightness(image, -self.aug_strength)
             
-        # Verify if have 9 images
-        assert len(augmented_images) == 6, f"Expected 6 images, got {len(augmented_images)}"
-
-        self.logger.debug(f"Generated {len(augmented_images)} augmented images "
-                          "(1 original + 6 augmentations).")
+        self.logger.debug(f"Generated 2 augmented images.")
         
-        return augmented_images        
+        return [bright_up, bright_down]
     
     def _adjust_brightness(self, image: np.ndarray, factor: float) -> np.ndarray:
         """
-        Adjust image brightness by factor (factor > 0: brighter, factor < 0: darker).
-        Clips to valid range [0, 255].
+        Adjust image brightness by multiplicative factor.
+        
+        Args:
+            image: BGR image.
+            factor: Positive = brighter, Negative = darker
+            
+        Returns:
+            Brightness-adjusted image
         """
         # Convert to float for calculation
         img_float = image.astype(np.float32)
@@ -92,8 +78,7 @@ class Augmentation:
         all_augmented = []
 
         for img in images:
-            augmented = self.augment(img)
-            all_augmented.extend(augmented)
+            all_augmented.extend(self.augment(img))
             
         self.logger.info(f"Batch augmentation: {len(images)} images → "
                          f"{len(all_augmented)} total images.")

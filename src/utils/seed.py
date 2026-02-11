@@ -3,7 +3,7 @@ import random
 import torch
 
 def set_seed(seed: int = 42) -> None:
-    """Set all random seeds for reproducibility."""        
+    """Sets all random seeds for reproducibility."""        
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)

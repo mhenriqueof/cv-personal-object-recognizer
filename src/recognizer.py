@@ -26,7 +26,7 @@ class RecognizeObject:
         # Frame Skipping
         self.detection_interval = self.config['performance']['detection_interval']
         self.frame_counter = 0
-        self.last_boxes = []
+        self.last_boxes = None
 
     def process(self, frame: np.ndarray, key: int) -> Tuple[np.ndarray, SystemMode]:
         """
@@ -68,7 +68,7 @@ class RecognizeObject:
         self.frame_counter += 1
         
         # Only run detection every N frames
-        if (self.frame_counter % self.detection_interval == 0) or (not self.last_boxes):
+        if (self.frame_counter % self.detection_interval == 0) or (self.last_boxes is None):
             boxes = self.detector.detect(frame, max_objects=self.max_objects)
             self.last_boxes = boxes
             return boxes
@@ -90,7 +90,7 @@ class RecognizeObject:
             # No valid crops or empty database
             for i, box in enumerate(boxes):
                 self._draw_detection(display_frame, box,
-                                     f"Object {i+1}", (50, 50, 50)) # Gray
+                                     f"Object {i+1}", (255, 255, 255)) # White
             return display_frame
         
         # Batch extract embeddings
@@ -121,7 +121,7 @@ class RecognizeObject:
         elif similarity >= self.threshold_low:
             return f"{label}? ({similarity:.2f})", (0, 255, 255) # Yellow
         else:
-            return f"Object {object_idx+1}", (50, 50, 50) # Gray
+            return f"Object {object_idx+1}", (255, 255, 255) # White
         
     def _draw_detection(self, frame: np.ndarray, box: Tuple, label: str, color: Tuple) -> None:
         """Draws a single detection with bounding box and label."""

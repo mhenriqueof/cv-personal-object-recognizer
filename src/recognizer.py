@@ -29,9 +29,7 @@ class RecognizeObject:
         self.last_boxes = None
         
         # Database
-        self.prototypes: List
-        self.labels: List
-        self.update_prototypes_labels()
+        self.prototypes, self.labels = self.memory.get_all_prototypes()
 
     def process(self, frame: np.ndarray, key: int) -> Tuple[np.ndarray, SystemMode]:
         """

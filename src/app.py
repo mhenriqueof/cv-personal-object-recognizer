@@ -1,7 +1,7 @@
 """
 Main Application Class
 
-Orchestrates the complete object recognition pipeline.
+Orchestrates the complete pipeline.
 """
 
 import cv2
@@ -21,8 +21,6 @@ from src.register import RegisterObject
 class PersonalObjectRecognizer:
     """
     Main application orchestrator for Personal Object Recognizer.
-    
-    Orchestrates the complete object recognition pipeline.
     
     Attributes:
         config: Application configurations.

@@ -1,7 +1,7 @@
 # Model Settings
 detector:
   model_name: "models/yolo26n.pt"
-  confidence_threshold: 0.25 # Min confidence to consider a detection
+  confidence_threshold: 0.3 # Min confidence to consider a detection
   iou_threshold: 0.45 # Non-max suppression threshold
 
 feature_extractor:
@@ -12,7 +12,7 @@ feature_extractor:
 # Registration Settings
 registration:
   max_captures: 4 # Maximum images for registration
-  augmentation_strength: 0.2 # Controls how strong augmentations are
+  augmentation_strength: 0.25 # Controls how strong augmentations are
 
 # Recognition Settings
 recognition:
@@ -22,7 +22,7 @@ recognition:
 
 # Performance Settings
 performance:
-  detection_interval: 3 # Detect every N frames (1 = every frame)
+  detection_interval: 10 # Detect every N frames (1 = every frame)
 
 # Data Paths
 paths:

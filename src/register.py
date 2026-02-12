@@ -60,6 +60,10 @@ class RegisterObject:
 
     def _create_display_frame(self, frame: np.ndarray, box: Optional[Tuple]) -> np.ndarray:
         """Adds registration UI elements to frame."""
+        text = "Press [Q] to cancel/return to recognition mode"
+        cv2.putText(frame, text, (10, 60),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        
         if box is not None:
             x1, y1, x2, y2 = box
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
@@ -72,7 +76,7 @@ class RegisterObject:
         if self.finish_instruction:
             text = (f"Press [F] to finish (1 capture is enough, "
                     f"{self.captures_count}/{self.max_captures} taken)")
-            cv2.putText(frame, text, (10, 60),
+            cv2.putText(frame, text, (10, 90),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         
         return frame
@@ -81,7 +85,7 @@ class RegisterObject:
                       box: Optional[Tuple]) -> Tuple[np.ndarray, SystemMode]:
         """Handles keyboard input during registration."""
         # Space key - capture image
-        if key == ord(' ') and box is not None and self.captures_count <= 4:
+        if key == ord(' ') and box is not None and self.captures_count < 4:
             self._capture_image(original_frame, box)
             self.captures_count += 1
             self.finish_instruction = True
@@ -95,6 +99,7 @@ class RegisterObject:
         elif key == ord('q'):
             print("Registration cancelled.")
             # Reset for next registration
+            self.memory.delete_object(self.object_name)
             self._reset_variables()
             return display_frame, SystemMode.RECOGNIZE
             
@@ -136,7 +141,7 @@ class RegisterObject:
         augmented_images = self.augmenter.augment_batch(raw_captures)
         print(f" Generated {len(augmented_images)} new images.")
 
-        # 
+        # Combine raw captures and augmented images into a single list
         all_images = raw_captures + augmented_images
         
         # Extract embeddings

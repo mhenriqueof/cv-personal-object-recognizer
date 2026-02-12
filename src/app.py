@@ -1,7 +1,5 @@
 """
 Main Application Class
-
-Orchestrates the complete pipeline.
 """
 
 import cv2
@@ -20,7 +18,7 @@ from src.register import RegisterObject
 
 class PersonalObjectRecognizer:
     """
-    Main application orchestrator for Personal Object Recognizer.
+    Main application orchestrator.
     
     Attributes:
         config: Application configurations.
@@ -48,7 +46,7 @@ class PersonalObjectRecognizer:
     
     def run(self, show_fps: bool = False) -> None:
         """
-        Runs the main application loop.
+        Runs the application loop.
         
         Args:
             show_fps: Whether to display FPS counter on screen.
@@ -65,9 +63,14 @@ class PersonalObjectRecognizer:
                 
             # System mode
             if self.system_mode == SystemMode.RECOGNIZE:
-                display_frame, self.system_mode = self.recognize.process(frame, key)
+                display_frame, new_system_mode = self.recognize.process(frame, key)
             else:
-                display_frame, self.system_mode = self.register.process(frame, key)
+                display_frame, new_system_mode = self.register.process(frame, key)
+            
+            # Refresh prototype cache and switch mode
+            if new_system_mode != self.system_mode:
+                self.recognize.update_prototypes_labels()
+                self.system_mode = new_system_mode
             
             # Display FPS
             if show_fps:

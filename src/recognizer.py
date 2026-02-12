@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from typing import Tuple
+from typing import Tuple, List
 
 from src.utils.system_mode import SystemMode
 
@@ -27,6 +27,11 @@ class RecognizeObject:
         self.detection_interval = self.config['performance']['detection_interval']
         self.frame_counter = 0
         self.last_boxes = None
+        
+        # Database
+        self.prototypes: List
+        self.labels: List
+        self.update_prototypes_labels()
 
     def process(self, frame: np.ndarray, key: int) -> Tuple[np.ndarray, SystemMode]:
         """
@@ -46,20 +51,18 @@ class RecognizeObject:
             return display_frame, SystemMode.REGISTER
         elif key == ord('c'):
             self.memory.clear()
+            self.update_prototypes_labels()
                 
-        # Get database info
-        prototypes, labels = self.memory.get_all_prototypes()
-
         # Display instructions
         self._add_instructions_text(display_frame)
         # Update display with database info
-        self._add_database_info(display_frame, len(labels))
+        self._add_database_info(display_frame, len(self.labels))
         
         # Smart detection with frame skipping
         boxes = self._get_detections(frame)       
         if boxes:
             # Process detections
-            display_frame = self._process_detections(display_frame, frame, boxes, prototypes, labels)
+            display_frame = self._process_detections(display_frame, frame, boxes, self.prototypes, self.labels)
 
         return display_frame, SystemMode.RECOGNIZE
     
@@ -146,3 +149,8 @@ class RecognizeObject:
         db_text = f"Objects in DB: {num_objects}"
         cv2.putText(frame, db_text, (10, 60),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+        
+    def update_prototypes_labels(self) -> None:
+        """Refreshes cached prototypes and labels from database."""
+        self.prototypes, self.labels = self.memory.get_all_prototypes()
+        

@@ -161,9 +161,10 @@ class MemoryManager:
             self.logger.warning(f"Object '{object_name}' not found in database.")
         
         # Delete from database
-        del self.database[object_name]
-        self._save_database()
-
+        if object_name in self.database:
+            del self.database[object_name]
+            self._save_database()
+            
         # Delete image folder
         raw_images_dir = self.config['paths']['raw_images']
         object_path = Path(raw_images_dir) / object_name

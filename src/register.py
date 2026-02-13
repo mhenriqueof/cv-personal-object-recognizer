@@ -85,7 +85,7 @@ class RegisterObject:
                       box: Optional[Tuple]) -> Tuple[np.ndarray, SystemMode]:
         """Handles keyboard input during registration."""
         # Space key - capture image
-        if key == ord(' ') and box is not None and self.captures_count < 4:
+        if key == ord(' ') and box is not None and self.captures_count < self.max_captures:
             self._capture_image(original_frame, box)
             self.captures_count += 1
             self.finish_instruction = True

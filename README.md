@@ -1,6 +1,6 @@
 # **Personal Object Recognizer**
-A real-time computer vision system that learns and recognizes personal objects from up to 4
-images. Built with NumPy, OpenCV, YOLO and MobileNetV3.
+A real-time few-shot computer vision system that learns and recognizes personal objects from up to 4
+images. Built with NumPy, OpenCV, YOLO 26 and MobileNetV3.
 
 
 ## **Objective**
@@ -8,14 +8,15 @@ The goal of this project was to build a system that integrates Computer Vision, 
 and Linear Algebra, fields I have recently studied, to apply and consolidate the knowledge I
 acquired.
 
-Beyond the core ML, the project was an opportunity to practice software engineering principles,
-including code versioning, structured documentation, modular design, clean code practices, performance optimization and reproducibility.
+Beyond the main ML, the project was also an opportunity to practice software engineering principles,
+including code versioning, structured documentation, modular design, clean code practices, performance
+optimization and reproducibility.
 
 
 ## **Overview**
 Instead of retraining a classifier, the system utilizes:
 
-* Pretrained object detection (YOLO)
+* Pretrained object detection (YOLO 26)
 * Deep feature embeddings (MobileNetV3)
 * Prototype-based representation
 * Cosine similarity for matching
@@ -56,13 +57,13 @@ No retraining required — learning is instantaneous.
 ## **Core Concepts**
 
 ### Feature Extraction
-* **Model**: MobileNetV3-Small (pretrained on ImageNet)
+* **Model**: MobileNetV3-Small
 * Classification head removed
 * Global average pooling added
 * Output: **576-dimensional L2-normalized embedding**
 
 ### Prototype Representation
-Each object is represented by a single vector:
+**Each object is represented by a single vector:**
 
 $$
 prototype = \frac{1}{n} \sum_{i=1}^{n} embedding_i
@@ -71,7 +72,8 @@ $$
 The averaged vector is re-normalized before storage.
 
 ### Similarity Matching
-Object recognition is performed using **cosine similarity** between the query embedding and each stored prototype.
+Object recognition is performed using **cosine similarity** between the query embedding and each
+stored prototype.
 
 **Cosine similarity is defined as:**
 
@@ -85,7 +87,7 @@ $$
 |q| = |p| = 1
 $$
 
-**The expression simplifies to:**
+**The expression simplifies to dot product:**
 
 $$
 \text{sim}(q, p) = q \cdot p
@@ -99,7 +101,7 @@ $$
 
 * where ( $p_i$ ) represents each stored object prototype.
 
-Predictions are accepted or rejected based on configurable confidence thresholds.
+Predictions are accepted or rejected based on configurable confidence thresholds in `configs/config.yaml`.
 
 
 ## **Performance Optimization**
@@ -113,9 +115,8 @@ Significant attention was given to optimization and system efficiency.
 
 2. **Frame skipping with caching** <br>
    YOLO runs every 10 frames
-   → Reduces detection overhead
 
-3. **Prototypes caching** <br>
+3. **Prototypes/labels caching** <br>
    Prevents unnecessary database reloads
 
 4. **Deterministic CUDA configuration** <br>
@@ -123,13 +124,13 @@ Significant attention was given to optimization and system efficiency.
 
 
 ### Results
-**Hardware:** Intel i3-6100, NVIDIA GTX 1060 3GB, 8GB RAM  
-**Camera:** 640×480 @ 30 FPS webcam
+**Hardware:** i3-6100, GTX 1060 3GB, 8GB RAM <br>
+**Webcam:** 640×480 @ 30 FPS
 
 #### **Before Optimization**
 | Scenario | FPS (average) | Notes |
 |----------|-----|-------|
-| No objects | 30 | Camera max |
+| No objects | 30 | Webcam max |
 | 1 object | 21 | Sequential extraction |
 | 2 objects | 15 | Linear scaling bottleneck |
 
@@ -137,8 +138,8 @@ Significant attention was given to optimization and system efficiency.
 | Scenario | FPS (average) | Improvement |
 |----------|-----|-------------|
 | No objects | 30 | – |
-| 1 object | 26 | **+24%** |
-| 2 objects | 26 | **+73%** |
+| 1 object | 24 | **+14%** |
+| 2 objects | 24 | **+60%** |
 
 
 ## **Usage**
@@ -155,21 +156,24 @@ Detection depends on [YOLO's pretrained classes](https://docs.ultralytics.com/da
 
 ### 1. Recognize Objects
 ```bash
-# Default mode - shows live recognition
-# Green → High confidence (>0.8)
-# Yellow → Medium confidence (0.7-0.8)  
-# Gray → Unknown object (<0.7)
+# Green → Confident (>0.8)
+# Yellow → Uncertain  (0.7-0.8)  
+# Gray → Unknown (<0.7)
 ```
 
 ### 2. Register a New Object
 ```bash
-# Press 'R' in Recognition mode
+# Press 'R' in Recognize mode
 # Capture a maximum of 4 images
 # Press 'F' to finish registration
 ```
 
 
 ## **Installation**
+### Requirements
+- Python 3.13
+
+### Clone the Repository
 ```bash
 git clone https://github.com/mhenriqueof/cv-personal-object-recognizer.git
 cd cv-personal-object-recognizer
@@ -188,7 +192,7 @@ pip install -r requirements.txt
 On first run, the system automatically downloads:
 
 * YOLO Nano weights
-* MobileNetV3-Small (via PyTorch)
+* MobileNetV3-Small
 
 
 ## **Project Structure**
@@ -213,14 +217,14 @@ cv_personal_object_recognizer/
 │   ├── register.py   # Registration workflow
 │   └── recognizer.py # Recognition workflow
 ├── models/ # YOLO weights (downloaded automatically)
-├── data/   # Database and captured images (created automatically)
+├── data/   # Database and captured images
 └── main.py # Entry point
 ```
 
 
 ---
 
-Even though this type of system will not be my focus in the future, I am very happy to have put what
-learned into practice and to have learned so much once again during the development process.
+Even though this type of system (unimodal) will not be my focus in the future, I am very happy to have
+put what learned into practice and to have learned so much once again during the development process.
 
 Thanks!

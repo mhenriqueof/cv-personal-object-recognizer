@@ -1,6 +1,6 @@
 # **Personal Object Recognizer**
 A real-time few-shot computer vision system that learns and recognizes personal objects from up to 4
-images. Built with NumPy, OpenCV, YOLO 26 and MobileNetV3.
+images. Built with NumPy, OpenCV, YOLO26 and MobileNetV3.
 
 
 ## **Objective**
@@ -16,8 +16,8 @@ optimization and reproducibility.
 ## **Overview**
 Instead of retraining a classifier, the system utilizes:
 
-* Pretrained object detection (YOLO 26)
-* Deep feature embeddings (MobileNetV3)
+* Pretrained object detection (YOLO26)
+* Feature embeddings (MobileNetV3)
 * Prototype-based representation
 * Cosine similarity for matching
 

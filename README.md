@@ -16,8 +16,8 @@ optimization and reproducibility.
 ## **Overview**
 Instead of retraining a classifier, the system utilizes:
 
-* Pretrained object detection (YOLO26)
-* Feature embeddings (MobileNetV3)
+* Pretrained object detection (YOLO)
+* Feature embeddings (MobileNet)
 * Prototype-based representation
 * Cosine similarity for matching
 
@@ -39,7 +39,7 @@ Frame → YOLO Detection → Crop Objects → Batch Embedding Extraction → Cos
 Features:
 
 * Up to 3 simultaneous objects
-* Color-coded confidence levels
+* Color confidence levels
 * Live FPS monitoring
 
 ### 2. Register Mode
@@ -51,7 +51,7 @@ Pipeline:
 Capture Images → Brightness Augmentation → Embedding Extraction → Prototype Averaging → JSON Storage
 ```
 
-No retraining required — learning is instantaneous.
+No retraining required, learning is instantaneous.
 
 
 ## **Core Concepts**
@@ -111,16 +111,16 @@ Significant attention was given to optimization and system efficiency.
 ### Optimizations Implemented
 
 1. **Batch embedding extraction** <br>
-   Single forward pass for multiple object crops
+   Single forward pass for multiple object crops.
 
 2. **Frame skipping with caching** <br>
-   YOLO runs every 10 frames
+   YOLO runs every 10 frames.
 
 3. **Prototypes/labels caching** <br>
-   Prevents unnecessary database reloads
+   Prevents unnecessary database reloads.
 
 4. **Deterministic CUDA configuration** <br>
-   Fixed seeds `cudnn.deterministic = True` (ensures reproducibility)
+   Fixed seeds `cudnn.deterministic = True` (ensures reproducibility).
 
 
 ### Results
@@ -168,6 +168,9 @@ Detection depends on [YOLO's pretrained classes](https://docs.ultralytics.com/da
 # Press 'F' to finish registration
 ```
 
+### **Demonstration**
+[Demo Video on LinkedIn](https://www.linkedin.com/posts/mhenriqueof_computervision-deeplearning-linearalgebra-ugcPost-7428051253152092160-f6Ll?utm_source=share&utm_medium=member_desktop&rcm=ACoAAE7A8jkBQPtwJJnf3HYdYbNZBwBCyxS8Xg0)
+
 
 ## **Installation**
 ### Requirements
@@ -191,7 +194,7 @@ pip install -r requirements.txt
 
 On first run, the system automatically downloads:
 
-* YOLO Nano weights
+* YOLO26 Nano weights
 * MobileNetV3-Small
 
 
@@ -199,7 +202,7 @@ On first run, the system automatically downloads:
 ```
 cv_personal_object_recognizer/
 ├── configs/ # YAML configuration
-├── src/
+├── src/ # Source code
 │   ├── core/ # Core components
 │   │   ├── camera.py    # OpenCV camera handler
 │   │   ├── detector.py  # YOLO object detection
@@ -207,7 +210,7 @@ cv_personal_object_recognizer/
 │   │   └── memory.py    # Database manager
 │   ├── utils/ # Utilities
 │   │   ├── augmentation.py # Brightness augmentation
-│   │   ├── config.py #     # YAML config loader
+│   │   ├── config.py       # YAML config loader
 │   │   ├── fps_tracker.py  # Performance monitoring
 │   │   ├── input_helper.py # Input validation for object name
 │   │   ├── logger.py       # Logging setup
@@ -220,7 +223,6 @@ cv_personal_object_recognizer/
 ├── data/   # Database and captured images
 └── main.py # Entry point
 ```
-
 
 ---
 

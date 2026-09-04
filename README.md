@@ -2,6 +2,8 @@
 A real-time few-shot computer vision system that learns and recognizes personal objects from up to 4
 images. Built with NumPy, OpenCV, YOLO26 and MobileNetV3.
 
+[Demonstration Video on LinkedIn](https://www.linkedin.com/posts/mhenriqueof_computervision-deeplearning-linearalgebra-ugcPost-7428051253152092160-f6Ll?utm_source=share&utm_medium=member_desktop&rcm=ACoAAE7A8jkBQPtwJJnf3HYdYbNZBwBCyxS8Xg0)
+
 
 ## **Objective**
 The goal of this project was to build a system that integrates Computer Vision, Deep Learning
@@ -167,9 +169,6 @@ Detection depends on [YOLO's pretrained classes](https://docs.ultralytics.com/da
 # Capture a maximum of 4 images
 # Press 'F' to finish registration
 ```
-
-### **Demonstration**
-[Demo Video on LinkedIn](https://www.linkedin.com/posts/mhenriqueof_computervision-deeplearning-linearalgebra-ugcPost-7428051253152092160-f6Ll?utm_source=share&utm_medium=member_desktop&rcm=ACoAAE7A8jkBQPtwJJnf3HYdYbNZBwBCyxS8Xg0)
 
 
 ## **Installation**
